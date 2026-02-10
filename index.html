@@ -5,11 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="Step2Save">
     <meta name="description" content="可愛的存錢規劃追蹤器，幫助你一步步達成存錢目標">
+    <meta name="theme-color" content="#e6c4c4">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Step2Save">
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json">
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
 
     <!-- Cache Control for development (remove in production) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -70,11 +81,43 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 
-    <!-- Unregister any previously registered service workers -->
+    <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          registrations.forEach(r => r.unregister());
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('[PWA] Service Worker registered successfully:', registration.scope);
+
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('[PWA] New Service Worker found, installing...');
+
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[PWA] New content available, please refresh!');
+                    // Show update notification
+                    if (confirm('發現新版本！點擊確定重新載入。')) {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
+            })
+            .catch(error => {
+              console.log('[PWA] Service Worker registration failed:', error);
+            });
+
+          // Reload page when new service worker takes control
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          });
         });
       }
     </script>

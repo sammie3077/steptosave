@@ -11,6 +11,7 @@ import { TaskManager } from './components/TaskManager';
 import { RecordForm } from './components/RecordForm';
 import { ProjectSwitcher } from './components/ProjectSwitcher';
 import { ConfirmDialog, ImageCropper } from './components/Shared';
+import { InstallPrompt } from './components/InstallPrompt';
 
 // --- Theme Configurations ---
 
@@ -536,6 +537,8 @@ const App: React.FC = () => {
         &copy; {new Date().getFullYear()} Step2Save • Your personal saving journey
       </footer>
 
+      {/* PWA Install Prompt */}
+      <InstallPrompt theme={theme} />
     </div>
   );
 };
