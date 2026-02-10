@@ -5,23 +5,24 @@ import { AppData } from '../types';
 const STORAGE_KEY = 'step2save_data';
 const SAVE_DELAY = 1000; // 1 second debounce
 
-export function useLocalStorage() {
-  const [data, setData] = useState<AppData>({ projects: [], theme: 'pink' });
-  const [isSaving, setIsSaving] = useState(false);
-  const isInitialMount = useRef(true);
-
-  // Load data from localStorage on mount
-  useEffect(() => {
+function loadFromStorage(): AppData {
+  try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      try {
-        const parsed: AppData = JSON.parse(saved);
-        setData(parsed);
-      } catch (e) {
-        console.error('Failed to parse saved data:', e);
-      }
+      return JSON.parse(saved) as AppData;
     }
-  }, []);
+  } catch (e) {
+    console.error('Failed to parse saved data:', e);
+  }
+  return { projects: [], theme: 'pink' };
+}
+
+export function useLocalStorage() {
+  // 使用同步 lazy initializer 在第一次 render 時直接讀取 localStorage，
+  // 避免非同步 load effect 與 App.tsx sync effect 競爭造成資料被空值覆蓋的問題。
+  const [data, setData] = useState<AppData>(loadFromStorage);
+  const [isSaving, setIsSaving] = useState(false);
+  const isInitialMount = useRef(true);
 
   // Debounced save function
   const debouncedSave = useCallback(
